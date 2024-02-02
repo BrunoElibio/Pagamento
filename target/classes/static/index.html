@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Pagamento</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<h1>Calculadora de Pagamento</h1>
+
+<label for="numeroPessoas">Número de Pessoas:</label>
+<input type="number" id="numeroPessoas" min="1" required>
+<br>
+
+<div id="formPagamentos">
+    <!-- Valores -->
+</div>
+
+<label for="desconto">Desconto:</label>
+<input id="desconto" min="0">
+<br>
+
+<label for="taxaEntrega">Taxa de Entrega:</label>
+<input id="taxaEntrega" min="0">
+<br>
+
+<button onclick="calcularPagamento()">Calcular Pagamento</button>
+
+<div id="resultado">
+    <!--Resultado-->
+</div>
+
+<script>
+    function gerarFormularioPagamentos() {
+        const numeroPessoas = document.getElementById('numeroPessoas').value;
+        const formPagamentos = document.getElementById('formPagamentos');
+
+        formPagamentos.innerHTML = '';
+
+        for (let i = 0; i < numeroPessoas; i++) {
+            formPagamentos.innerHTML += `
+                <label for="valorPessoa${i + 1}">Valor para Pessoa ${i + 1}:</label>
+                <input type="number" id="valorPessoa${i + 1}" min="0" required>
+                <span id="valorRetornado${i + 1}"></span>
+                <br>
+            `;
+        }
+    }
+
+    async function calcularPagamento() {
+        const numeroPessoas = document.getElementById('numeroPessoas').value;
+        const resultadoElement = document.getElementById('resultado');
+        resultadoElement.innerHTML = '';
+
+        const pagamentos = [];
+        for (let i = 0; i < numeroPessoas; i++) {
+            const valor = parseFloat(document.getElementById(`valorPessoa${i + 1}`).value);
+            pagamentos.push({ valor });
+        }
+
+        const desconto = document.getElementById('desconto').value || 0;
+        const entrega = document.getElementById('taxaEntrega').value || 0;
+
+        try {
+            const response = await fetch('http://localhost:8080/calcularPagamento', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ pagamentos, desconto, entrega })
+            });
+
+            const data = await response.json();
+
+            for (let i = 0; i < numeroPessoas; i++) {
+                const valorRetornadoElement = document.getElementById(`valorRetornado${i + 1}`);
+
+                const linkPicpay = await gerarLinkPicpay(data[i].valor.toFixed(2));
+                resultadoElement.innerHTML += `
+                    <p>
+                        Pessoa ${i + 1}:
+                        Você deve pagar: R$${data[i].valor.toFixed(2)}.
+                        Pagamento via Picpay: <a href="${linkPicpay}" target="_blank">${linkPicpay}</a>
+                    </p>
+                `;
+            }
+
+        } catch (error) {
+            console.error('Erro ao calcular pagamento:', error);
+        }
+    }
+
+    async function gerarLinkPicpay(valor) {
+        try {
+            const response = await fetch(`http://localhost:8080/gerarLinkPagamento?valor=${valor}`);
+            const linkPicpay = await response.text();
+            return linkPicpay;
+        } catch (error) {
+            console.error('Erro ao gerar link Picpay:', error);
+            return '';
+        }
+    }
+
+    document.getElementById('numeroPessoas').addEventListener('input', gerarFormularioPagamentos);
+</script>
+</body>
+
+</html>

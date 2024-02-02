@@ -1,0 +1,7 @@
+br\com\Pagamento\PagamentoApplication.class
+br\com\Pagamento\Model\DadosPagamento.class
+br\com\Pagamento\Providers\OutroProvider.class
+br\com\Pagamento\Providers\PagamentoProvider.class
+br\com\Pagamento\Providers\PicpayProvider.class
+br\com\Pagamento\Controller\PagamentoController.class
+br\com\Pagamento\Model\Pagamento.class
